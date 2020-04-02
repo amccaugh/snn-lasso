@@ -1,6 +1,7 @@
 #%%
 import numpy as np
-#from numba import njit
+from matplotlib import pyplot as plt
+from numba import njit
 
 # Define the dictionary and starting state
 # Phi = dictionary
@@ -34,16 +35,19 @@ Lidx = np.zeros(X, dtype = int)
 # v is the membrane potential
 v = np.zeros(N)
 
-dt = 1e-4
+dt = 1e-5
 times = np.arange(0,10,dt)
 
 data = {}
 data['v'] = np.zeros([len(times), N])
 data['mu'] = np.zeros([len(times), N])
-data['alpha'] = np.zeros([len(times), N])
 data['spikes'] = np.zeros([len(times), N])
 
-for i,t in enumerate(times):
+
+
+
+@njit
+def timestep(v, L, Lidx, t, dt):
     # Compute the per-neuron membrane current
     alpha = np.sum(np.exp(-(t-L)), axis = 1)
     mu = b - alpha @ w
@@ -59,30 +63,28 @@ for i,t in enumerate(times):
             if is_spiking[n] == True:
                 L[n,Lidx[n]] = t
                 Lidx[n] = (Lidx[n] + 1) % X
+    return v, mu, L, Lidx, is_spiking
+    
+for i,t in enumerate(times):
+    v, mu, L, Lidx, is_spiking = timestep(v, L, Lidx, t, dt)
     
     # Save data
     data['v'][i,:] = v
     data['mu'][i,:] = mu
-    data['alpha'][i,:] = alpha
     data['spikes'][i,is_spiking] = 1
 
-figure()
-plot(times, data['v'][:,0])
-plot(times, data['v'][:,1])
-plot(times, data['v'][:,2])
+plt.figure()
+plt.plot(times, data['v'][:,0])
+plt.plot(times, data['v'][:,1])
+plt.plot(times, data['v'][:,2])
 
 
-figure()
-plot(times, data['mu'][:,0])
-plot(times, data['mu'][:,1])
-plot(times, data['mu'][:,2])
+plt.figure()
+plt.plot(times, data['mu'][:,0])
+plt.plot(times, data['mu'][:,1])
+plt.plot(times, data['mu'][:,2])
 
-figure()
-plot(times, data['spikes'][:,0]*1, '+')
-plot(times, data['spikes'][:,1]*1.1, '+')
-plot(times, data['spikes'][:,2]*1.2, '+')
-
-figure()
-plot(times, data['alpha'][:,0])
-plot(times, data['alpha'][:,1])
-plot(times, data['alpha'][:,2])
+plt.figure()
+plt.plot(times, data['spikes'][:,0]*1, '+')
+plt.plot(times, data['spikes'][:,1]*1.1, '+')
+plt.plot(times, data['spikes'][:,2]*1.2, '+')

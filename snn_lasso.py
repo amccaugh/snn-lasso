@@ -25,7 +25,7 @@ w_mask = 1 - np.identity(N)
 w *= w_mask
 
 
-# L holds the last X times a spike arrived to neuron i from neuron j
+# L holds the last X times a spike arrived to neuron i
 X = 4
 L = np.ones([N,X])*(-100)
 Lidx = np.zeros(X, dtype = int)
@@ -34,7 +34,7 @@ Lidx = np.zeros(X, dtype = int)
 # v is the membrane potential
 v = np.zeros(N)
 
-dt = 1e-5
+dt = 1e-4
 times = np.arange(0,10,dt)
 
 data = {}
@@ -58,7 +58,7 @@ for i,t in enumerate(times):
         for n in range(N):
             if is_spiking[n] == True:
                 L[n,Lidx[n]] = t
-                Lidx = (Lidx + 1) % X
+                Lidx[n] = (Lidx[n] + 1) % X
     
     # Save data
     data['v'][i,:] = v

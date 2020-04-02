@@ -2,6 +2,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from numba import njit
+from scipy.optimize import minimize
+
+
+
+
 
 # Define the dictionary and starting state
 # Phi = dictionary
@@ -26,22 +31,18 @@ w_mask = 1 - np.identity(N)
 w *= w_mask
 
 
+
 # L holds the last X times a spike arrived to neuron i
 X = 4
-L = np.ones([N,X])*(-100)
-Lidx = np.zeros(X, dtype = int)
 
 
-# v is the membrane potential
-v = np.zeros(N)
-
-dt = 1e-5
+dt = 1e-3
 times = np.arange(0,10,dt)
 
 data = {}
-data['v'] = np.zeros([len(times), N])
-data['mu'] = np.zeros([len(times), N])
-data['spikes'] = np.zeros([len(times), N])
+data_v = np.zeros([len(times), N])
+data_mu = np.zeros([len(times), N])
+data_spikes = np.zeros([len(times), N])
 
 
 
@@ -65,26 +66,62 @@ def timestep(v, L, Lidx, t, dt):
                 Lidx[n] = (Lidx[n] + 1) % X
     return v, mu, L, Lidx, is_spiking
     
-for i,t in enumerate(times):
-    v, mu, L, Lidx, is_spiking = timestep(v, L, Lidx, t, dt)
+@njit
+def run(total_time, dt):
+    times = np.arange(0,total_time,dt)
     
-    # Save data
-    data['v'][i,:] = v
-    data['mu'][i,:] = mu
-    data['spikes'][i,is_spiking] = 1
+    v = np.zeros(N) # v is the membrane potential
+    
+    # L holds the last X times a spike arrived to neuron i
+    L = np.ones((N,X))*(-100)
+    Lidx = np.zeros(X, dtype = np.int_)
 
-plt.figure()
-plt.plot(times, data['v'][:,0])
-plt.plot(times, data['v'][:,1])
-plt.plot(times, data['v'][:,2])
+    data_v = np.zeros((len(times), N))
+    data_mu = np.zeros((len(times), N))
+    data_spikes = np.zeros((len(times), N))
+    
+    for i,t in enumerate(times):
+        v, mu, L, Lidx, is_spiking = timestep(v, L, Lidx, t, dt)
+        
+        # Save data
+        data_v[i,:] = v
+        data_mu[i,:] = mu
+        data_spikes[i,:] = is_spiking
+    
+    return data_v, data_mu, data_spikes
 
+total_time = 10
 
-plt.figure()
-plt.plot(times, data['mu'][:,0])
-plt.plot(times, data['mu'][:,1])
-plt.plot(times, data['mu'][:,2])
+data_v, data_mu, data_spikes = run(10, dt)
+#
+#plt.figure()
+#plt.plot(times, data_v[:,0])
+#plt.plot(times, data_v[:,1])
+#plt.plot(times, data_v[:,2])
+#
+#
+#plt.figure()
+#plt.plot(times, data_mu[:,0])
+#plt.plot(times, data_mu[:,1])
+#plt.plot(times, data_mu[:,2])
+#
+#plt.figure()
+#plt.plot(times, data_spikes[:,0]*1, '+')
+#plt.plot(times, data_spikes[:,1]*1.1, '+')
+#plt.plot(times, data_spikes[:,2]*1.2, '+')
 
-plt.figure()
-plt.plot(times, data['spikes'][:,0]*1, '+')
-plt.plot(times, data['spikes'][:,1]*1.1, '+')
-plt.plot(times, data['spikes'][:,2]*1.2, '+')
+print("SNN LASSO solution =", np.sum(data_spikes,axis = 0)/total_time)
+
+# =============================================================================
+# Solve using LASSO objective
+# =============================================================================
+def lasso(x,lam,Phi,b):
+    # Evaluates Lasso objective
+    f = 1/2*np.linalg.norm(b-Phi@x,2)**2 + lam*np.linalg.norm(x,1)
+    return f
+
+# Solve problem by direct optimization
+f_opt = lambda x: lasso(x,lam,Phi,s)
+x0  = np.ones(N)
+res = minimize(f_opt, x0, method='nelder-mead', options={'xtol':1e-6})
+print("Direct LASSO solution =", np.round(res.x,2))

@@ -10,8 +10,8 @@ from scipy.optimize import minimize
 # Target parameters and initialization
 # =============================================================================
 np.random.seed(1)
-N = 10 # Number of neurons / number of dictionary items
-M = 10 # Dimension of input target / output vector
+N = 400 # Number of neurons / number of dictionary items
+M = 400 # Dimension of input target / output vector
 Phi = np.random.uniform(0,1,size = (M,N))
 s = np.random.uniform(0,2, size = M)
 

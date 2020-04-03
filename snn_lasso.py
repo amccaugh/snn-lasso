@@ -18,28 +18,10 @@ s = np.random.uniform(0,2, size = M)
 # Normalize each dictionary atom (phi_i in Phi) to unit Euclidean norm
 for i in range(N):
     Phi[:,i] /= np.linalg.norm(Phi[:,i])
-    
-#Phi = np.array([[0.3313,0.8148,0.4364],
-#                [.8835,0.3621,0.2182],
-#                [0.3313,0.4527,0.8729]])
-#s = np.array([0.5,1,1.5]) # target (desired output trying to approximate)
-
 
 
 vf = 1 # Threshold membrane potential
 vr = 0 # Reset membrane potential
-
-## Manually test the creation of w and b
-#w_test = np.zeros([N,N])
-#b_test = np.zeros(N)
-#for i in range(N):
-#    phi_i = Phi[:,i]
-#    b_test[i] = phi_i @ s
-#    for j in range(N):
-#        phi_j = Phi[:,j]
-#        w_test[i,j] = phi_i @ phi_j
-
-
 lam = 0.1 # Lambda = static bias value for membrane current
 
 
@@ -49,19 +31,8 @@ w = Phi.T @ Phi # (size NxN)
 w_mask = 1 - np.identity(N)
 w *= w_mask
 
-
-
-# L holds the last X times a spike arrived to neuron i
+# X=4 means the alpha term integrates the latest 4 spikes (and ignores all spikes before that)
 X = 10
-
-
-#
-#data = {}
-#data_v = np.zeros([len(times), N])
-#data_mu = np.zeros([len(times), N])
-#data_spikes = np.zeros([len(times), N])
-#
-
 
 
 @njit

@@ -10,8 +10,14 @@ from scipy.optimize import minimize
 # Target parameters and initialization
 # =============================================================================
 np.random.seed(1)
-N = 400 # Number of neurons / number of dictionary items
-M = 400 # Dimension of input target / output vector
+N = 1000 # Number of neurons / number of dictionary items
+M = 1000 # Dimension of input target / output vector
+total_time = 100
+dt = 1e-3
+
+times = np.arange(0,total_time,dt)
+
+# Create a randomized dictionary `Phi` and target state `s`
 Phi = np.random.uniform(0,1,size = (M,N))
 s = np.random.uniform(0,2, size = M)
 
@@ -19,20 +25,22 @@ s = np.random.uniform(0,2, size = M)
 for i in range(N):
     Phi[:,i] /= np.linalg.norm(Phi[:,i])
 
-
+# Set neuron membrane potential parameters
 vf = 1 # Threshold membrane potential
 vr = 0 # Reset membrane potential
 lam = 0.1 # Lambda = static bias value for membrane current
 
-
+# Create bias vector `b` and weight matrix `w` from dictionary `Phi`
 b = Phi.T @ s # Bias vector for the neurons (size N)
-# Weight matrix between the neurons
-w = Phi.T @ Phi # (size NxN)
+w = Phi.T @ Phi # Weight matrix between the neurons (size NxN)
 w_mask = 1 - np.identity(N)
 w *= w_mask
 
 # X=4 means the alpha term integrates the latest 4 spikes (and ignores all spikes before that)
 X = 10
+
+
+
 
 
 @njit
@@ -52,8 +60,6 @@ def timestep(v, L, Lidx, t, dt):
             if is_spiking[n] == True:
                 L[n,Lidx[n]] = t
                 Lidx[n] = (Lidx[n] + 1) % X
-#        import pdb
-#        pdb.set_trace()
     return v, mu, L, Lidx, is_spiking, alpha
     
 @njit
@@ -82,12 +88,9 @@ def run(total_time, dt):
     
     return data_v, data_mu, data_spikes, data_alpha
 
-total_time = 100
-dt = 1e-3
-times = np.arange(0,total_time,dt)
 
 data_v, data_mu, data_spikes, data_alpha = run(total_time, dt)
-
+# Compute spike rate
 data_spike_rates = (np.cumsum(data_spikes,0).T/times).T
 
 #fig, axs = plt.subplots(4,1, sharex = True, sharey = False)

@@ -10,9 +10,9 @@ from scipy.optimize import minimize
 # Target parameters and initialization
 # =============================================================================
 np.random.seed(1)
-N = 1000 # Number of neurons / number of dictionary items
-M = 1000 # Dimension of input target / output vector
-total_time = 100
+N = 3 # Number of neurons / number of dictionary items
+M = 3 # Dimension of input target / output vector
+total_time = 3
 dt = 1e-3
 
 times = np.arange(0,total_time,dt)
@@ -93,17 +93,17 @@ data_v, data_mu, data_spikes, data_alpha = run(total_time, dt)
 # Compute spike rate
 data_spike_rates = (np.cumsum(data_spikes,0).T/times).T
 
-#fig, axs = plt.subplots(4,1, sharex = True, sharey = False)
-#p = 0
-#[axs[p].plot(times, data_v[:,n],'.') for n in range(N)]
-#p += 1
-#[axs[p].plot(times, data_mu[:,n],'.') for n in range(N)]
-#p += 1
-#[axs[p].plot(times, np.cumsum(data_spikes[:,n]),'.') for n in range(N)]
-#p += 1
-#[axs[p].plot(times, data_alpha[:,n],'.') for n in range(N)]
-#p += 1
-#plt.tight_layout()
+fig, axs = plt.subplots(4,1, sharex = True, sharey = False)
+p = 0
+[axs[p].plot(times, data_v[:,n]) for n in range(N)]
+p += 1
+[axs[p].plot(times, data_mu[:,n]) for n in range(N)]
+p += 1
+[axs[p].plot(times, np.cumsum(data_spikes[:,n]),'.') for n in range(N)]
+p += 1
+[axs[p].plot(times, data_alpha[:,n],'.') for n in range(N)]
+p += 1
+plt.tight_layout()
 
 solution_snn = data_spike_rates[-1,:]
 print("SNN LASSO solution = %s" % np.round(np.sum(data_spikes,axis = 0)/total_time,2))

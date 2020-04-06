@@ -25,42 +25,42 @@ def convergence(solution_snn, solution_direct, lam, Phi, s):
     return (E-E_star)/E_star
 
 
-@njit
-def timestep(w,b,lam,vf,vr,N,X,v,L,Lidx,t,dt):
-    # Compute the per-neuron membrane current
-    alpha = np.sum(np.exp(-(t-L)), axis = 1)
-    mu = b - alpha @ w
-    # Increase the membrane potential by the membrane current
-    v = v + dt*(mu - lam)
-    # Check which neurons have exceeded the membrane potential
-    # is_spiking = v > vf
-    # if sum(is_spiking > 0):
-    #     # Reset those neurons
-    #     v[is_spiking] = vr
-    #     # Update the last-spike-time for each synapse in L
-    #     for n in range(N):
-    #         if is_spiking[n] == True:
-    #             L[n,Lidx[n]] = t
-    #             Lidx[n] = (Lidx[n] + 1) % X
-    return v, mu, L, Lidx, is_spiking
+# @njit
+# def timestep(w,b,lam,vf,vr,N,X,v,L,Lidx,t,dt):
+#     # Compute the per-neuron membrane current
+#     alpha = np.sum(np.exp(-(t-L)), axis = 1)
+#     mu = b - alpha @ w
+#     # Increase the membrane potential by the membrane current
+#     v = v + dt*(mu - lam)
+#     # Check which neurons have exceeded the membrane potential
+#     # is_spiking = v > vf
+#     # if sum(is_spiking > 0):
+#     #     # Reset those neurons
+#     #     v[is_spiking] = vr
+#     #     # Update the last-spike-time for each synapse in L
+#     #     for n in range(N):
+#     #         if is_spiking[n] == True:
+#     #             L[n,Lidx[n]] = t
+#     #             Lidx[n] = (Lidx[n] + 1) % X
+#     return v, mu, L, Lidx, is_spiking
     
-@njit
-def run(w,b,lam,vf,vr,N,X,v,L,Lidx,total_time, dt):
-    times = np.arange(0,total_time,dt)
+# @njit
+# def run(w,b,lam,vf,vr,N,X,v,L,Lidx,total_time, dt):
+#     times = np.arange(0,total_time,dt)
 
-    data_v = np.zeros((len(times), N))
-    data_mu = np.zeros((len(times), N))
-    data_spikes = np.zeros((len(times), N))
+#     data_v = np.zeros((len(times), N))
+#     data_mu = np.zeros((len(times), N))
+#     data_spikes = np.zeros((len(times), N))
     
-    for i,t in enumerate(times):
-        v, mu, L, Lidx, is_spiking = timestep(w,b,lam,vf,vr,N,X,v, L, Lidx, t, dt)
+#     for i,t in enumerate(times):
+#         v, mu, L, Lidx, is_spiking = timestep(w,b,lam,vf,vr,N,X,v, L, Lidx, t, dt)
         
-        # Save data
-        data_v[i,:] = v
-        data_mu[i,:] = mu
-        data_spikes[i,:] = is_spiking
+#         # Save data
+#         data_v[i,:] = v
+#         data_mu[i,:] = mu
+#         data_spikes[i,:] = is_spiking
     
-    return data_v, data_mu, data_spikes
+#     return data_v, data_mu, data_spikes
 
 
 class SNN(object):

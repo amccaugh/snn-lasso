@@ -104,10 +104,15 @@ class SNN(object):
     def vt(self, dt):
         """ Computes the membrane potential `dt` time away from now """
         # Compute the per-neuron membrane current
+        # In Euler time-stepping the equation is this:
+            # integral of d(mu)/dt = dt*(b + alpha*w)
+        # But now that we're doing arbitrary time-stepping, we have to use the
+        # full integral:
+            # integral of d(mu)/dt = b*dt + alpha*w*(1-np.exp(-dt)
         alpha = np.sum(np.exp(-(self.t-self.L)), axis = 1)
-        mu = self.b - alpha @ self.w
+        delta_mu = self.b*dt - (alpha @ self.w) * (1-np.exp(-dt))
         # Increase the membrane potential by the membrane current
-        v = self.v + dt*(mu - self.lam)
+        v = self.v + delta_mu - self.lam*dt
         return v
         
     
@@ -117,9 +122,10 @@ class SNN(object):
         
 
 
-    def timestep_to_next_spike(self, dt_tol, time_to_scan = 5):
+    def timestep_to_next_spike(self, dt_tol, time_to_scan = 1):
         # Use "brentq" zero-crossing algorithm to find where first spike happens
         dt = brentq(f = self._next_spike_objective, a = 0, b = time_to_scan, xtol = dt_tol)
+
 
         # Move forward in time `dt + dt_tol` because just moving `dt` may
         # not put `v` quite above threshold
@@ -139,18 +145,18 @@ class SNN(object):
         
         return self.t, np.where(is_spiking)[0].tolist()
         
-
-snn = SNN(N = 100, M = 100, seed = 3)
+time_start = time.time()
+snn = SNN(N = 500, M = 500, seed = 3)
 
 spikes = []
-for n in range(400):
+for n in range(4000):
     # print(snn.v)
     t, s = snn.timestep_to_next_spike(1e-6)
     spikes.extend(s)
 solution_snn = np.array([spikes.count(n) for n in range(snn.N)])/t
 solution_direct =classo_solve(solution_snn, snn.lam, snn.Phi, snn.s)
 print(convergence(solution_snn, solution_direct, snn.lam, snn.Phi, snn.s))
-
+print(time.time() - time_start)
 
 
 # %timeit -r10 -n10 find_next_spike(snn, dt_tol = 1e-6, time_to_scan = 1)
